@@ -123,6 +123,33 @@ var ConfigFilePriority = []string{
 	DefaultAgentConfigPath,
 }
 
+const (
+	PlatformAPIKeyConfigPlaceholder = "<api_key>"
+	PlatformAddrConfigPlaceholder   = "<platform_addr>"
+	PlatformAddrEnvVar              = "MA_PLATFORM"
+	PlatformAPIKeyEnvVar            = "MA_API_KEY"
+)
+
+func loadPlatformAPIKeyFromEnv() {
+	if AgentConf.Platform.APIKey == PlatformAPIKeyConfigPlaceholder {
+		apiKey := os.Getenv(PlatformAPIKeyEnvVar)
+		if len(apiKey) > 0 {
+			log.Printf("loaded MA_API_KEY from env: %s", apiKey)
+			AgentConf.Platform.APIKey = apiKey
+		}
+	}
+}
+
+func loadPlatformAddrFromEnv() {
+	if AgentConf.Platform.Addr == PlatformAddrConfigPlaceholder {
+		addr := os.Getenv(PlatformAddrEnvVar)
+		if len(addr) > 0 {
+			log.Printf("loaded MA_PLATFORM from env: %s", addr)
+			AgentConf.Platform.Addr = addr
+		}
+	}
+}
+
 // LoadAgentConfig loads agent configuration.
 func LoadAgentConfig() error {
 	var (
@@ -156,6 +183,9 @@ func LoadAgentConfig() error {
 			watchConf.SamplingInterval = AgentConf.Runtime.SamplingInterval
 		}
 	}
+
+	loadPlatformAPIKeyFromEnv()
+	loadPlatformAddrFromEnv()
 
 	if len(AgentConf.Platform.APIKey) == 0 {
 		return fmt.Errorf("API key is missing from loaded config")
