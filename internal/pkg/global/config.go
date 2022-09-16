@@ -124,10 +124,17 @@ var ConfigFilePriority = []string{
 }
 
 const (
+	// PlatformAPIKeyConfigPlaceholder config placeholder for dynamic api key configuration
 	PlatformAPIKeyConfigPlaceholder = "<api_key>"
-	PlatformAddrConfigPlaceholder   = "<platform_addr>"
-	PlatformAddrEnvVar              = "MA_PLATFORM"
-	PlatformAPIKeyEnvVar            = "MA_API_KEY"
+
+	// PlatformAddrConfigPlaceholder config placeholder for dynamic platform address configuration
+	PlatformAddrConfigPlaceholder = "<platform_addr>"
+
+	// PlatformAPIKeyEnvVar env var used to override platform.api_key
+	PlatformAPIKeyEnvVar = "MA_API_KEY"
+
+	// PlatformAddrEnvVar env var used to override platform.addr
+	PlatformAddrEnvVar = "MA_PLATFORM"
 )
 
 func loadPlatformAPIKeyFromEnv() {
