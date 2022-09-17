@@ -40,6 +40,10 @@ DARWIN_GOARCHAR = amd64 arm64
 
 OSAR = LINUX DARWIN
 
+# Docker
+DOCKER = $(shell which docker)
+DOCKERFILE := ./docker/Dockerfile
+
 PROTOBIND = protobind
 
 .PHONY: all
@@ -78,7 +82,7 @@ cover-%: test-%
 
 .PHONY: $(PROTOBIND)
 $(PROTOBIND):
-	@cd $(PROTOBIND) && $(MAKE) install 
+	@cd $(PROTOBIND) && $(MAKE) install
 
 .PHONY: generate-%
 generate-%: $(PROTOBIND)
@@ -94,6 +98,15 @@ build-%: generate-%
 	-X 'agent/internal/pkg/global.Blockchain=${*}' \
 	" cmd/agent/main.go
 
+.PHONY: docker-build-%
+docker-build-%: generate-%
+	echo "Building Metrikad Docker agent"
+	$(DOCKER) build -f $(DOCKERFILE) \
+		-t metrikad-${*}:dockerize \
+		--build-arg MA_PROTOCOL=${*} \
+		--build-arg MA_VERSION=dockerize \
+		--build-arg MA_OS_ARCH=$(GOARCH) .
+
 checksum-%:
 	sha256sum metrikad-${*}-$(GOOS)-$(GOARCH) > metrikad-${*}-$(GOOS)-$(GOARCH).sha256
 
@@ -101,7 +114,7 @@ protogen:
 	$(eval PROTOC_TMP := $(shell mktemp -d))
 	rm -rf $(PWD)/tmp/include/google $(PWD)/tmp/go/io
 	mkdir -p tmp/include tmp/go tmp/bin tmp/openmetrics api/v1/proto/openmetrics
-	
+
 	cd $(PROTOC_TMP); curl -sSL https://github.com/protocolbuffers/protobuf/releases/download/v$(PROTOC_VERSION)/protoc-$(PROTOC_VERSION)-$(PROTOC_OS)-$(PROTOC_ARCH).zip -o protoc.zip
 	cd $(PROTOC_TMP); unzip protoc.zip && mv include/google $(PWD)/tmp/include/
 	cd $(PROTOC_TMP); git clone https://github.com/prometheus/client_model.git && mv client_model/io/ $(PWD)/tmp/go/
@@ -136,6 +149,9 @@ build-linux-arm64: $(PROTOBIND) linux-arm64-env $(foreach b,$(PROTOS),build-$(b)
 
 .PHONY: build
 build: $(PROTOBIND) $(foreach b,$(PROTOS),build-$(b))
+
+.PHONY: docker-build
+docker-build: $(PROTOBIND) $(foreach b,$(PROTOS),docker-build-$(b))
 
 .PHONY: clean-%
 clean-%:
